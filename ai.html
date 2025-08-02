@@ -1,308 +1,414 @@
-<!DOCTYPE html>
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AI Chatbot</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
-  <style>
-    :root {
-      --light-blue: #d4f1f9;
-      --medium-blue: #90cdf4;
-      --dark-blue: #3182ce;
-      --white: #ffffff;
-      --text-color: #333;
-    }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Poppins', sans-serif;
-      background-color: var(--light-blue);
-      color: var(--text-color);
-      transition: background-color 0.5s ease, color 0.5s ease;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-      align-items: center;
-    }
-
-    body.dark {
-      --text-color: #f0f0f0;
-      background-color: #121212;
-    }
-
-    header {
-      width: 100%;
-      background-color: var(--medium-blue);
-      color: var(--white);
-      padding: 1.2rem 2rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-      transition: background-color 0.5s ease, color 0.5s ease;
-      flex-shrink: 0;
-    }
-
-    .header-controls {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-
-    .theme-arrows,
-    .dark-toggle {
-      font-size: 1.5rem;
-      cursor: pointer;
-      user-select: none;
-      padding: 0.2rem 0.5rem;
-      border-radius: 5px;
-      transition: background-color 0.3s ease;
-    }
-
-    .theme-arrows:hover,
-    .dark-toggle:hover {
-      background-color: rgba(255, 255, 255, 0.2);
-    }
-
-    nav a {
-      color: var(--white);
-      margin: 0 1rem;
-      text-decoration: none;
-      font-weight: 600;
-      transition: color 0.5s ease;
-    }
-
-    nav a:hover {
-      text-decoration: underline;
-    }
-
-    /* --- Chatbot styles --- */
-    .chatbox {
-      width: 400px;
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      height: 500px;
-      margin-top: 3rem;
-      flex-shrink: 0;
-    }
-
-    .chat-content {
-      max-height: 350px;
-      overflow-y: auto;
-      padding-right: 10px;
-      margin-bottom: 15px;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .chat-content .user {
-      background-color: var(--medium-blue);
-      align-self: flex-end;
-      padding: 8px;
-      border-radius: 10px;
-      margin: 5px;
-      max-width: 70%;
-      color: var(--white);
-    }
-
-    .chat-content .ai {
-      background-color: var(--dark-blue);
-      align-self: flex-start;
-      padding: 8px;
-      border-radius: 10px;
-      margin: 5px;
-      max-width: 70%;
-      color: var(--white);
-    }
-
-    .user-input {
-      width: 100%;
-      padding: 10px;
-      border-radius: 5px;
-      border: 1px solid var(--dark-blue);
-      margin-right: 10px;
-      font-size: 14px;
-      font-family: 'Poppins', sans-serif;
-    }
-
-    .send-btn {
-      padding: 10px;
-      background-color: var(--dark-blue);
-      color: var(--white);
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 14px;
-      margin-top: 10px;
-      font-family: 'Poppins', sans-serif;
-    }
-
-    .send-btn:hover {
-      background-color: #2563bb;
-    }
-
-    .send-btn:focus {
-      outline: none;
-    }
-
-    .input-area {
-      display: flex;
-      align-items: center;
-    }
-
-    nav.chat-nav {
-      margin-top: 1rem;
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-      width: 100%;
-    }
-
-    nav.chat-nav a {
-      color: var(--dark-blue);
-      font-weight: 600;
-      text-decoration: none;
-      font-family: 'Poppins', sans-serif;
-    }
-
-    nav.chat-nav a:hover {
-      text-decoration: underline;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Welcome to SafeSpace</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+--light-blue: #d4f1f9;
+--medium-blue: #90cdf4;
+--dark-blue: #3182ce;
+--white: #ffffff;
+--text-color: #333;
+--card-bg: var(--white);
+}
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+}
+body {
+font-family: 'Poppins', sans-serif;
+background-color: var(--light-blue);
+color: var(--text-color);
+transition: background-color 0.5s ease, color 0.5s ease;
+}
+body.dark {
+--text-color: #f0f0f0;
+--card-bg: #1f1f1f;
+background-color: #121212;
+}
+header {
+background-color: var(--medium-blue);
+color: var(--white);
+padding: 1.2rem 2rem;
+display: flex;
+justify-content: space-between;
+align-items: center;
+box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+transition: background-color 0.5s ease, color 0.5s ease;
+}
+.header-controls {
+display: flex;
+align-items: center;
+gap: 1rem;
+}
+.theme-arrows,
+.dark-toggle {
+font-size: 1.5rem;
+cursor: pointer;
+user-select: none;
+padding: 0.2rem 0.5rem;
+border-radius: 5px;
+transition: background-color 0.3s ease;
+}
+.theme-arrows:hover,
+.dark-toggle:hover {
+background-color: rgba(255, 255, 255, 0.2);
+}
+nav a {
+color: var(--white);
+margin: 0 1rem;
+text-decoration: none;
+font-weight: 600;
+transition: color 0.5s ease;
+}
+nav a:hover {
+text-decoration: underline;
+}
+.hero {
+background-color: var(--light-blue);
+color: var(--dark-blue);
+text-align: center;
+padding: 5rem 2rem;
+transition: background-color 0.5s ease, color 0.5s ease;
+}
+body.dark .hero {
+background-color: #1a1a1a;
+color: #90cdf4;
+}
+.hero h1 {
+font-size: 3rem;
+margin-bottom: 0.5rem;
+}
+.hero p {
+font-size: 1.2rem;
+margin-bottom: 2rem;
+}
+.content {
+background-color: var(--card-bg);
+padding: 3rem 2rem;
+margin: 2rem;
+border-radius: 10px;
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+transition: background-color 0.5s ease, color 0.5s ease;
+}
+.content h2 {
+color: var(--dark-blue);
+margin-bottom: 1rem;
+transition: color 0.5s ease;
+}
+body.dark .content h2 {
+color: #90cdf4;
+}
+.content p {
+font-size: 1.1rem;
+line-height: 1.6;
+}
+footer {
+background-color: var(--medium-blue);
+color: var(--white);
+text-align: center;
+padding: 1rem;
+font-size: 0.95rem;
+transition: background-color 0.5s ease, color 0.5s ease;
+}
+textarea {
+resize: none;
+border: 2px solid var(--medium-blue);
+border-radius: 0.5rem;
+padding: 1rem;
+width: 100%;
+font-family: 'Poppins', sans-serif;
+font-size: 1rem;
+transition: border-color 0.3s ease;
+}
+textarea:focus {
+border-color: var(--dark-blue);
+outline: none;
+}
+.submit-btn {
+background-color: var(--medium-blue);
+color: var(--white);
+padding: 0.75rem 1.5rem;
+border: none;
+border-radius: 5px;
+font-size: 1rem;
+cursor: pointer;
+transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+}
+.submit-btn:hover {
+background-color: var(--dark-blue);
+transform: scale(1.05);
+box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+.response {
+background-color: var(--light-blue);
+padding: 1rem;
+border-radius: 0.5rem;
+margin-top: 1rem;
+transition: background-color 0.5s ease;
+}
+body.dark .response {
+background-color: #2a2a2a;
+}
+</style>
 </head>
 <body>
-  <header>
-    <h2>SafeSpace</h2>
-    <div class="header-controls">
-      <div class="theme-arrows" onclick="changeTheme(-1)">&#8592;</div>
-      <nav>
-        <a href="#">Home</a>
-        <a href="conatct.html">Contact Us</a>
-        <a href="ai.html">Ask AI</a>
-      </nav>
-      <div class="theme-arrows" onclick="changeTheme(1)">&#8594;</div>
-      <div class="dark-toggle" onclick="toggleDarkMode()" title="Toggle Dark Mode">🌙</div>
-    </div>
-  </header>
-
-  <div class="chatbox">
-    <div id="chat-content" class="chat-content"></div>
-    <div class="input-area">
-      <input type="text" id="user-input" class="user-input" placeholder="Type a message..." />
-      <button id="send-btn" class="send-btn">Send</button>
-    </div>
-  </div>
-
-
-  <script src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12"></script>
-  <script>
-    const themes = [
-      { light: '#b2fab4', medium: '#00e676', dark: '#00c853' }, // Green
-      { light: '#ffc1e3', medium: '#f06292', dark: '#d81b60' }, // Pink
-      { light: '#eeeeee', medium: '#757575', dark: '#212121' }, // Gray
-      { light: '#fff59d', medium: '#ffeb3b', dark: '#fbc02d' }, // Yellow
-      { light: '#d4f1f9', medium: '#00b0ff', dark: '#2962ff' }, // Blue (DEFAULT)
-      { light: '#ffe0b2', medium: '#ff9800', dark: '#e65100' }, // Orange
-      { light: '#b2ebf2', medium: '#00bcd4', dark: '#0097a7' }, // Teal
-      { light: '#d1c4e9', medium: '#7e57c2', dark: '#4527a0' }, // Purple
-      { light: '#d7ccc8', medium: '#8d6e63', dark: '#4e342e' }, // Brown
-      { light: '#ffcdd2', medium: '#e57373', dark: '#c62828' }  // Red
-    ];
-
-    let currentTheme = parseInt(localStorage.getItem('themeIndex'));
-    if (isNaN(currentTheme)) currentTheme = 4; // Default blue
-
-    let darkMode = localStorage.getItem('darkMode') === 'true';
-
-    function applyTheme(index) {
-      const theme = themes[index];
-      document.documentElement.style.setProperty('--light-blue', theme.light);
-      document.documentElement.style.setProperty('--medium-blue', theme.medium);
-      document.documentElement.style.setProperty('--dark-blue', theme.dark);
-      localStorage.setItem('themeIndex', index);
-    }
-
-    function changeTheme(direction) {
-      currentTheme = (currentTheme + direction + themes.length) % themes.length;
-      applyTheme(currentTheme);
-    }
-
-    function toggleDarkMode() {
-      darkMode = !darkMode;
-      document.body.classList.toggle('dark', darkMode);
-      localStorage.setItem('darkMode', darkMode);
-      document.querySelector('.dark-toggle').textContent = darkMode ? '☀️' : '🌙';
-    }
-
-    function loadPreferences() {
-      applyTheme(currentTheme);
-      document.body.classList.toggle('dark', darkMode);
-      document.querySelector('.dark-toggle').textContent = darkMode ? '☀️' : '🌙';
-    }
-
-    loadPreferences();
-
-    // --- Chatbot script ---
-    function createMessage(message, sender) {
-      const messageDiv = document.createElement('div');
-      messageDiv.classList.add(sender);
-      messageDiv.textContent = message;
-      document.getElementById('chat-content').appendChild(messageDiv);
-      document.getElementById('chat-content').scrollTop = document.getElementById('chat-content').scrollHeight;
-    }
-
-    function aiResponse(userMessage) {
-      const lowerCaseMessage = userMessage.toLowerCase();
-
-      if (lowerCaseMessage.includes("sad")) {
-        return "I'm really sorry you're feeling sad. It's okay to feel that way. Would you like to talk about it?";
-      } else if (lowerCaseMessage.includes("happy")) {
-        return "That's awesome! I'm glad you're feeling happy. What's making you feel that way?";
-      } else if (lowerCaseMessage.includes("angry")) {
-        return "I'm sorry you're feeling angry. It's completely normal. Want to share what's bothering you?";
-      } else if (lowerCaseMessage.includes("anxious")) {
-        return "I understand how anxiety can feel overwhelming. It's okay, take a deep breath, and I'm here if you need to talk.";
-      } else if (lowerCaseMessage.includes("hi") || lowerCaseMessage.includes("hello")) {
-        return "Hello! How can I help you today?";
-      } else if (lowerCaseMessage.includes("how are you")) {
-        return "I'm just a chatbot, but thank you for asking! How about you?";
-      } else if (lowerCaseMessage.includes("bye")) {
-        return "Goodbye! Take care and feel free to chat with me anytime!";
-      } else if (lowerCaseMessage.includes("what is your name") || lowerCaseMessage.includes("who are you")) {
-        return "I'm a friendly chatbot here to help you. You can call me Chatbot!";
-      } else if (lowerCaseMessage.includes("how old are you")) {
-        return "I'm ageless, just a program made to help you out!";
-      } else {
-        return "I understand. Tell me more.";
-      }
-    }
-
-    function sendMessage() {
-      const userInput = document.getElementById('user-input').value.trim();
-
-      if (userInput) {
-        createMessage(userInput, 'user');
-        document.getElementById('user-input').value = '';
-        const aiMessage = aiResponse(userInput);
-        setTimeout(() => createMessage(aiMessage, 'ai'), 500);
-      }
-    }
-
-    document.getElementById('send-btn').addEventListener('click', sendMessage);
-    document.getElementById('user-input').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') sendMessage();
-    });
-  </script>
+<header>
+<h2>SafeSpace</h2>
+<div class="header-controls">
+<div class="theme-arrows" onclick="changeTheme(-1)">&#8592;</div>
+<nav>
+<a href="Startpage.html">Home</a>
+<a href="conatct.html">Contact Us</a>
+<a href="ai.html">Ask AI</a>
+</nav>
+<div class="theme-arrows" onclick="changeTheme(1)">&#8594;</div>
+<div class="dark-toggle" onclick="toggleDarkMode()" title="Toggle Dark Mode">🌙</div>
+</div>
+</header>
+<section class="hero">
+<h1>Welcome to SafeSpace</h1>
+<p>A calm and anonymous space to ask and answer questions online.</p>
+</section>
+<section class="content">
+<h2>Talk to SafeSpace AI</h2>
+<p>I'm here to listen like a therapist. Share your thoughts and feelings, and I'll respond with care.</p>
+<textarea id="userInput" rows="5" placeholder="Tell me what's on your mind..."></textarea>
+<div class="text-center mt-4">
+<button id="submitBtn" class="submit-btn">Share</button>
+</div>
+<p id="response" class="response hidden"></p>
+<div id="followUpSection" class="hidden mt-4">
+<textarea id="followUpInput" rows="3" placeholder="What's your response? I'm here to keep listening..."></textarea>
+<div class="text-center mt-4">
+<button id="followUpBtn" class="submit-btn">Continue</button>
+</div>
+</div>
+<p id="followUpResponse" class="response hidden"></p>
+</section>
+<footer>&copy; 2025 SafeSpace. Stay calm. Stay connected.</footer>
+<script>
+const themes = [
+{ light: '#b2fab4', medium: '#00e676', dark: '#00c853' },
+{ light: '#ffc1e3', medium: '#f06292', dark: '#d81b60' },
+{ light: '#eeeeee', medium: '#757575', dark: '#212121' },
+{ light: '#fff59d', medium: '#ffeb3b', dark: '#fbc02d' },
+{ light: '#d4f1f9', medium: '#00b0ff', dark: '#2962ff' },
+{ light: '#ffe0b2', medium: '#ff9800', dark: '#e65100' },
+{ light: '#b2ebf2', medium: '#00bcd4', dark: '#0097a7' },
+{ light: '#d1c4e9', medium: '#7e57c2', dark: '#4527a0' },
+{ light: '#d7ccc8', medium: '#8d6e63', dark: '#4e342e' },
+{ light: '#ffcdd2', medium: '#e57373', dark: '#c62828' }
+];
+let currentTheme = parseInt(localStorage.getItem('themeIndex'));
+if (isNaN(currentTheme)) currentTheme = 4;
+let darkMode = localStorage.getItem('darkMode') === 'true';
+function applyTheme(index) {
+const theme = themes[index];
+document.documentElement.style.setProperty('--light-blue', theme.light);
+document.documentElement.style.setProperty('--medium-blue', theme.medium);
+document.documentElement.style.setProperty('--dark-blue', theme.dark);
+localStorage.setItem('themeIndex', index);
+}
+function changeTheme(direction) {
+currentTheme = (currentTheme + direction + themes.length) % themes.length;
+applyTheme(currentTheme);
+}
+function toggleDarkMode() {
+darkMode = !darkMode;
+document.body.classList.toggle('dark', darkMode);
+localStorage.setItem('darkMode', darkMode);
+document.querySelector('.dark-toggle').textContent = darkMode ? '☀️' : '🌙';
+}
+function loadPreferences() {
+applyTheme(currentTheme);
+document.body.classList.toggle('dark', darkMode);
+document.querySelector('.dark-toggle').textContent = darkMode ? '☀️' : '🌙';
+}
+loadPreferences();
+const emotionResponses = {
+sad: [
+"I hear how deeply you're feeling this sadness, and my heart goes out to you. It’s okay to let these emotions surface; they’re part of your journey. Can you share what’s been weighing on you? Maybe talking about it will help lighten the load, even just a little. I’m here to listen without judgment, and together we can explore what’s been happening. What’s one thing that’s been especially hard for you lately? Let’s take it one step at a time, and I’ll be right here with you.",
+"Your sadness feels so heavy, and I’m here to hold space for you. It’s brave to share this, and I want you to know you’re not alone. What’s been going on that’s brought these feelings up? Maybe there’s a specific moment or thought that’s been lingering. I’m here to listen and support you as you navigate this. Would it help to talk about what’s been hardest or perhaps something that might bring a bit of comfort right now? I’m all ears, ready to walk through this with you."
+],
+happy: [
+"Your joy is absolutely radiant, and it’s such a gift to hear about it! What’s been lighting up your world like this? I’d love to know more about what’s sparking this happiness. It sounds like something truly special is happening. Can you share a moment that’s made you smile recently? I’m here to celebrate with you and explore what makes this feeling so vibrant. Let’s dive into what’s been bringing you this warmth and maybe find ways to keep it glowing even brighter!",
+"I can feel the warmth of your happiness through your words, and it’s truly uplifting! What’s been making your heart sing? It’s so wonderful to hear you in such a great space. Can you tell me more about what’s been going on? Maybe there’s a specific moment or person that’s been part of it. I’m here to share in this positivity and explore what makes it so special. What’s one thing that’s been making you feel so alive lately? Let’s talk more!"
+],
+angry: [
+"I can sense the intensity of your anger, and it’s okay to feel this way—emotions like these have a lot to tell us. What’s been happening to stir this up? I’m here to listen without judgment and help you unpack it. Maybe there’s a specific situation or person that’s been at the heart of this. Would you like to share more about what’s been going on? I’m here to support you as we explore this together, and maybe we can find a way to ease that tension. What’s been the toughest part?",
+"Your frustration sounds so real, and I’m here to hear you out. Anger can be such a powerful signal that something needs attention. What’s been triggering these feelings for you? I’d love to understand more about what’s been happening. You don’t have to hold this alone—I’m right here to listen and support you. Can you share a bit more about what’s been going on? Maybe we can work through it together and find some clarity or even a small step toward calm. What do you think?"
+],
+stressed: [
+"It sounds like you’re carrying so much right now, and I’m here to help you through this stress. What’s been piling up to make things feel so overwhelming? I’m listening with care, ready to support you as we sort through it. Maybe there’s one thing that’s been especially heavy—would you like to talk about it? We can take it slowly, one piece at a time, and I’ll be here every step of the way. What’s been the toughest part of this for you? Let’s explore what might help ease the pressure, even just a little.",
+"I hear how overwhelming this stress feels, and I’m here to hold space for you. It’s a lot to manage, and you’re doing your best. What’s been contributing to this pressure? Maybe there’s a specific task or situation that’s been weighing on you. I’m here to listen and help you unpack it, step by step. Can you share more about what’s been going on? Let’s take a moment to breathe and see if we can find a small way to lighten the load. I’m right here with you."
+],
+anxious: [
+"I can feel how much this anxiety is weighing on you, and I’m here to sit with you through it. It’s okay to feel this way, and you’re not alone. What’s been sparking these anxious thoughts? Maybe there’s a specific worry that’s been circling in your mind. I’m here to listen without judgment and help you explore what’s going on. Would you like to share more about what’s been happening? Let’s take it one step at a time, and maybe we can find a way to ease that tension together. What’s been the toughest part?",
+"Your anxiety sounds so intense, and I’m here to support you through this. It can be so hard when those worries start to build up. Can you tell me what’s been triggering these feelings? I’m listening with care, ready to help you unpack it. Maybe there’s one thought or situation that’s been especially loud. I’m here to walk through this with you, step by step. What’s been the hardest part of this anxiety for you? Let’s explore it together and see if we can find a moment of calm amidst it all."
+],
+lonely: [
+"I hear the ache of loneliness in your words, and my heart is with you. It’s tough to feel so disconnected, and I’m so glad you’re sharing this. Can you tell me more about what’s been going on? Maybe there’s a moment or feeling that’s been especially hard. I’m here to listen and hold space for you, without judgment. Would it help to talk about what’s been making you feel this way? Let’s explore it together, and maybe we can find a small way to feel a bit more connected. I’m right here for you.",
+"Feeling lonely can be so heavy, and I’m here to sit with you in this moment. You’re not alone in sharing this with me, and that’s a brave step. What’s been happening that’s brought on this feeling? Maybe there’s a specific situation or thought that’s been lingering. I’m here to listen with care and support you as we navigate this. Can you share more about what’s been going on? Let’s take it one step at a time, and I’ll be here to help you feel heard and understood. What’s been the toughest part?"
+],
+excited: [
+"Your excitement is so infectious, and I’m thrilled to hear it! What’s got you so energized right now? It sounds like something amazing is happening. Can you share more about what’s sparking this enthusiasm? I’m here to celebrate with you and dive into what makes this moment so special. Maybe there’s a specific event or idea that’s driving this. What’s the most exciting part for you? Let’s talk more about it and keep that energy flowing! I’m all ears, ready to share in this joy with you.",
+"I can feel your excitement leaping through your words, and it’s so uplifting! What’s been fueling this incredible energy? It’s wonderful to hear you so passionate. Can you tell me more about what’s going on? Maybe there’s a moment or plan that’s really lighting you up. I’m here to share in this enthusiasm and explore what makes it so special. What’s been the highlight of this excitement for you? Let’s dive deeper and keep that spark alive together! I’m right here to listen and celebrate with you."
+],
+overwhelmed: [
+"It sounds like you’re juggling so much right now, and I’m here to help you through this overwhelming feeling. Can you share what’s been piling up? I’m listening with care, ready to support you as we sort through it. Maybe there’s one thing that’s feeling especially heavy—would you like to talk about it? We can take it slowly, one piece at a time, and I’ll be here every step of the way. What’s been the toughest part of this for you? Let’s explore what might help ease the weight, even just a little.",
+"I hear how overwhelming this feels, and I’m here to hold space for you. It’s a lot to carry, and you’re doing your best. What’s been contributing to this sense of being overwhelmed? Maybe there’s a specific task or situation that’s been weighing on you. I’m here to listen and help you unpack it, step by step. Can you share more about what’s been going on? Let’s take a moment to breathe and see if we can find a small way to lighten the load. I’m right here with you."
+]
+};
+const followUpResponses = {
+sad: [
+"Thank you for sharing more—it means a lot that you’re opening up. I can see how much this is affecting you. What’s been the hardest part since we last talked? Maybe there’s a small step we can explore together, like finding a moment of calm or something that brings a bit of comfort. I’m here to listen and support you, no matter how small or big this feels. What’s on your mind now? Let’s keep walking through this together, one step at a time.",
+"I’m so grateful you’re continuing to share. It sounds like this sadness is really heavy, and I’m here to hold space for you. Can you tell me more about what’s been going on since your last message? Maybe there’s a specific thought or moment that’s been lingering. I’m listening with care, ready to support you as we navigate this. What’s one thing that’s been especially tough? Let’s explore it together and see if we can find a bit of light in this moment."
+],
+happy: [
+"I love hearing more about your joy—it’s so uplifting! What else has been sparking this happiness since we last talked? It sounds like you’re in such a vibrant space. Can you share another moment that’s been making you smile? I’m here to celebrate with you and keep exploring what makes this so special. What’s been the best part of this feeling lately? Let’s dive deeper and keep that positive energy flowing together!",
+"Your happiness is so contagious, and I’m thrilled to hear more! What’s been fueling this great mood since your last message? It’s wonderful to see you so energized. Can you tell me about another moment or thing that’s been lighting you up? I’m here to share in this joy and explore what’s behind it. What’s been the highlight of this happiness for you? Let’s keep talking about it and amplify that positivity together!"
+],
+angry: [
+"I really appreciate you sharing more—it takes strength to open up about anger. I can sense how intense this feels. What’s been happening since we last talked? Maybe there’s a specific thing that’s been fueling this frustration. I’m here to listen without judgment and help you unpack it. Can you share what’s been going on? Let’s explore it together and see if we can find a way to ease that tension, even just a bit. What’s on your mind now?",
+"Thank you for continuing to share—I’m here for you. Your anger sounds so real, and it’s okay to feel this way. What’s been stirring things up since your last message? Maybe there’s a particular situation or thought that’s been at the heart of this. I’m listening with care, ready to support you as we work through it. What’s been the toughest part lately? Let’s take it one step at a time and see if we can find some clarity together."
+],
+stressed: [
+"I’m so glad you’re sharing more—it’s a big step. It sounds like this stress is really weighing on you. What’s been going on since we last talked? Maybe there’s one thing that’s been feeling especially heavy. I’m here to listen and help you sort through it, step by step. Can you share what’s been on your mind? Let’s explore what might help ease the pressure, even just a little. What’s been the toughest part for you right now? I’m right here with you.",
+"Thank you for opening up again—I’m here to support you. This stress sounds like a lot to carry. What’s been adding to it since your last message? Maybe there’s a specific task or situation that’s been overwhelming. I’m listening with care, ready to help you unpack it. Can you tell me more about what’s been going on? Let’s take a moment to breathe and see if we can find a small way to lighten the load. What’s been the hardest part lately?"
+],
+anxious: [
+"I really appreciate you sharing more—it’s brave to talk about anxiety. I can sense how much this is affecting you. What’s been happening since we last talked? Maybe there’s a specific worry that’s been circling in your mind. I’m here to listen without judgment and help you explore it. Can you share what’s been going on? Let’s take it one step at a time and see if we can find a moment of calm together. What’s been the toughest part for you right now?",
+"Thank you for continuing to share—I’m here for you. Your anxiety sounds so intense, and I’m here to hold space for it. What’s been triggering these feelings since your last message? Maybe there’s one thought or situation that’s been especially loud. I’m listening with care, ready to support you as we navigate this. Can you tell me more about what’s been going on? Let’s explore it together and see if we can find a small way to ease that tension. What’s on your mind now?"
+],
+lonely: [
+"I’m so grateful you’re sharing more—it means a lot. Feeling lonely can be so tough, and I’m here to sit with you in this. What’s been going on since we last talked? Maybe there’s a moment or thought that’s been especially heavy. I’m listening with care, ready to support you as we explore this. Can you share what’s been on your mind? Let’s take it one step at a time and see if we can find a way to feel a bit more connected. What’s been the hardest part for you lately?",
+"Thank you for opening up again—your courage means so much. I hear how heavy this loneliness feels. What’s been happening since your last message? Maybe there’s a specific situation or feeling that’s been lingering. I’m here to listen without judgment and help you navigate this. Can you tell me more about what’s been going on? Let’s explore it together and see if we can find a small moment of connection or comfort. What’s been the toughest part for you right now? I’m right here with you."
+],
+excited: [
+"I love hearing more about your excitement—it’s so energizing! What’s been fueling this enthusiasm since we last talked? It sounds like something incredible is happening. Can you share another moment that’s been sparking this joy? I’m here to celebrate with you and dive into what makes this so special. What’s been the most exciting part lately? Let’s keep talking about it and keep that vibrant energy flowing together! I’m all ears, ready to share in this moment with you.",
+"Your excitement is so uplifting, and I’m thrilled to hear more! What’s been driving this amazing energy since your last message? It’s wonderful to see you so passionate. Can you tell me about another moment or thing that’s been lighting you up? I’m here to share in this enthusiasm and explore what’s behind it. What’s been the highlight of this excitement for you? Let’s dive deeper and keep that spark alive together! I’m right here to listen and celebrate with you."
+],
+overwhelmed: [
+"I’m so glad you’re sharing more—it’s a big step. It sounds like this overwhelming feeling is a lot to carry. What’s been piling up since we last talked? Maybe there’s one thing that’s been especially heavy. I’m here to listen and help you sort through it, step by step. Can you share what’s been on your mind? Let’s explore what might help ease the weight, even just a little. What’s been the toughest part for you right now? I’m right here with you.",
+"Thank you for continuing to share—I’m here to support you. This overwhelming feeling sounds so intense. What’s been contributing to it since your last message? Maybe there’s a specific task or situation that’s been weighing on you. I’m listening with care, ready to help you unpack it. Can you tell me more about what’s been going on? Let’s take a moment to breathe and see if we can find a small way to lighten the load. What’s been the hardest part lately? I’m right here with you."
+]
+};
+const emotionKeywords = {
+sad: ["sad", "down", "depressed", "hurt", "upset", "crying", "low", "blue", "heartbroken", "grief"],
+happy: ["happy", "great", "awesome", "excited", "joy", "amazing", "good", "cheerful", "delighted", "content"],
+angry: ["angry", "mad", "frustrated", "annoyed", "irritated", "furious", "enraged", "upset", "irate", "aggravated"],
+stressed: ["stressed", "overwhelmed", "anxious", "nervous", "worried", "pressure", "tense", "strained", "frazzled", "burdened"],
+anxious: ["anxious", "nervous", "worried", "uneasy", "tense", "restless", "apprehensive", "panicked", "fearful", "jittery"],
+lonely: ["lonely", "alone", "isolated", "lonesome", "detached", "solitary", "abandoned", "forlorn", "empty", "disconnected"],
+excited: ["excited", "thrilled", "eager", "enthusiastic", "pumped", "stoked", "energized", "exhilarated", "animated", "elated"],
+overwhelmed: ["overwhelmed", "swamped", "overloaded", "flooded", "snowed under", "buried", "inundated", "overpowered", "stressed", "drowning"]
+};
+function getEmotion(input) {
+input = input.toLowerCase();
+for (let emotion in emotionKeywords) {
+if (emotionKeywords[emotion].some(word => input.includes(word))) {
+return emotion;
+}
+}
+return "neutral";
+}
+function getTherapistResponse(emotion, input) {
+const responses = emotionResponses[emotion] || [
+"Thank you for sharing what’s on your mind. I’m here to listen and support you as we explore your thoughts. Can you tell me more about what’s been going on? Maybe there’s a specific feeling or moment you’d like to dive into. I’m here without judgment, ready to walk through this with you. What’s been the most significant part of this for you? Let’s take it one step at a time, and I’ll be right here to help you reflect and find some clarity or comfort."
+];
+let response = responses[Math.floor(Math.random() * responses.length)];
+if (input.length > 150) {
+response += " I can see you’ve shared a lot, and I’m grateful for your openness. Let’s keep exploring—what else is on your heart?";
+} else if (input.length < 30) {
+response += " It’s okay if you’re just starting to open up. I’m here whenever you’re ready to share more. What’s one thing you’d like to talk about?";
+}
+return response;
+}
+function getFollowUpResponse(emotion, input) {
+const responses = followUpResponses[emotion] || [
+"I really appreciate you continuing to share—it means a lot. Can you tell me more about what’s on your mind now? Maybe there’s a specific thought or feeling you’d like to explore further. I’m here to listen without judgment and support you as we go deeper. What’s been the most significant part of this for you? Let’s keep talking and see where this takes us, one step at a time. I’m right here with you."
+];
+let response = responses[Math.floor(Math.random() * responses.length)];
+if (input.length > 100) {
+response += " Your openness is so meaningful, and I’m grateful for it. What’s next on your mind? Let’s keep this conversation going.";
+} else if (input.length < 20) {
+response += " It’s okay to take your time. I’m here whenever you’re ready to share more. What’s one thing you’re thinking about now?";
+}
+return response;
+}
+document.getElementById("submitBtn").addEventListener("click", () => {
+const userInput = document.getElementById("userInput").value.trim();
+const responseEl = document.getElementById("response");
+const followUpSection = document.getElementById("followUpSection");
+if (!userInput) {
+responseEl.textContent = "I’m here when you’re ready to share. What’s on your mind? No matter how small it seems, I’m listening.";
+responseEl.classList.remove("hidden");
+followUpSection.classList.add("hidden");
+return;
+}
+const emotion = getEmotion(userInput);
+responseEl.textContent = getTherapistResponse(emotion, userInput);
+responseEl.classList.remove("hidden");
+followUpSection.classList.remove("hidden");
+document.getElementById("userInput").value = "";
+});
+document.getElementById("followUpBtn").addEventListener("click", () => {
+const followUpInput = document.getElementById("followUpInput").value.trim();
+const followUpResponseEl = document.getElementById("followUpResponse");
+if (!followUpInput) {
+followUpResponseEl.textContent = "I’m here whenever you’re ready to share more. What’s on your mind now? I’m listening with care.";
+followUpResponseEl.classList.remove("hidden");
+return;
+}
+const emotion = getEmotion(followUpInput);
+followUpResponseEl.textContent = getFollowUpResponse(emotion, followUpInput);
+followUpResponseEl.classList.remove("hidden");
+document.getElementById("followUpInput").value = "";
+});
+</script>
 </body>
 </html>
