@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Welcome to SafeSpace</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --light-blue: #d4f1f9;
+    --medium-blue: #90cdf4;
+    --dark-blue: #3182ce;
+    --white: #ffffff;
+    --text-color: #333;
+    --card-bg: var(--white);
+  }
+
+  * {
+    margin: 0; padding: 0; box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--light-blue);
+    color: var(--text-color);
+    transition: background-color 0.5s ease, color 0.5s ease;
+  }
+
+  body.dark {
+    --text-color: #f0f0f0;
+    --card-bg: #1f1f1f;
+    background-color: #121212;
+  }
+
+  header {
+    background-color: var(--medium-blue);
+    color: var(--white);
+    padding: 1.2rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    transition: background-color 0.5s ease, color 0.5s ease;
+  }
+
+  .header-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .theme-arrows,
+  .dark-toggle {
+    font-size: 1.5rem;
+    cursor: pointer;
+    user-select: none;
+    padding: 0.2rem 0.5rem;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+  }
+
+  .theme-arrows:hover,
+  .dark-toggle:hover {
+    background-color: rgba(255,255,255,0.2);
+  }
+
+  nav a {
+    color: var(--white);
+    margin: 0 1rem;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.5s ease;
+  }
+
+  nav a:hover {
+    text-decoration: underline;
+  }
+
+  /* Hero banner from your SafeSpace code */
+  .hero {
+    background-color: var(--light-blue);
+    color: var(--dark-blue);
+    text-align: center;
+    padding: 5rem 2rem;
+    transition: background-color 0.5s ease, color 0.5s ease;
+  }
+
+  body.dark .hero {
+    background-color: #1a1a1a;
+    color: #90cdf4;
+  }
+
+  .hero h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+
+  .hero p {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+  }
+
+  .hero .button-group {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .hero .button-group a {
+    background-color: var(--medium-blue);
+    color: var(--white);
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  .hero .button-group a:hover {
+    background-color: var(--dark-blue);
+  }
+
+  /* Main container for Q&A */
+  main {
+    max-width: 700px;
+    margin: 30px auto 60px auto;
+    padding: 0 20px;
+  }
+
+  h3 {
+    margin-bottom: 10px;
+    color: var(--dark-blue);
+    font-weight: 700;
+    font-size: 1.8rem;
+    transition: color 0.5s ease;
+  }
+
+  body.dark h3 {
+    color: #90cdf4;
+  }
+
+  textarea, input[type="text"], select {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+    transition: border-color 0.3s ease;
+  }
+
+  textarea:focus, input[type="text"]:focus, select:focus {
+    outline: none;
+    border-color: var(--medium-blue);
+  }
+
+  button {
+    margin-top: 10px;
+    padding: 10px 18px;
+    background-color: var(--medium-blue);
+    color: var(--white);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+  }
+
+  button:hover {
+    background-color: var(--dark-blue);
+  }
+
+  .question {
+    background-color: var(--card-bg);
+    padding: 20px;
+    border-radius: 12px;
+    margin-top: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    transition: background-color 0.5s ease, color 0.5s ease;
+  }
+
+  body.dark .question {
+    background-color: var(--card-bg);
+  }
+
+  .meta {
+    font-size: 12px;
+    color: gray;
+    margin-bottom: 8px;
+  }
+
+  .likes {
+    font-size: 12px;
+    color: #555;
+    margin-top: 5px;
+    user-select: none;
+  }
+
+  .reply {
+    margin-top: 8px;
+    padding: 12px;
+    background-color: #e6f0ff;
+    border-radius: 8px;
+    font-size: 14px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    transition: background-color 0.3s ease;
+  }
+
+  body.dark .reply {
+    background-color: #2a3a5a;
+  }
+
+  .reply img {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    user-select: none;
+  }
+
+  .reply-content {
+    flex: 1;
+  }
+
+  .reply-meta {
+    font-size: 12px;
+    color: #555;
+    margin-top: 4px;
+    margin-bottom: 6px;
+  }
+
+  .reply-box {
+    margin-top: 10px;
+    display: flex;
+    gap: 8px;
+  }
+
+  .reply-box input {
+    flex: 1;
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+  }
+
+  .reply-box input:focus {
+    outline: none;
+    border-color: var(--medium-blue);
+  }
+
+  .reply-box button {
+    padding: 8px 14px;
+    background-color: var(--medium-blue);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+  }
+
+  .reply-box button:hover {
+    background-color: var(--dark-blue);
+  }
+
+  #searchBar, #sortSelect {
+    margin-top: 20px;
+    padding: 10px;
+    width: 100%;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+
+  /* Nested replies styling */
+  .nested-replies {
+    margin-left: 48px;
+    margin-top: 10px;
+  }
+
+  footer {
+    background-color: var(--medium-blue);
+    color: var(--white);
+    text-align: center;
+    padding: 1rem;
+    font-size: 0.95rem;
+    transition: background-color 0.5s ease, color 0.5s ease;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h2>SafeSpace</h2>
+  <div class="header-controls">
+    <div class="theme-arrows" onclick="changeTheme(-1)">&#8592;</div>
+    <nav>
+      <a href="#">Home</a>
+      <a href="conatct.html">Contact Us</a>
+	  <a href="ai.html">Ask AI</a>
+    </nav>
+    <div class="theme-arrows" onclick="changeTheme(1)">&#8594;</div>
+    <div class="dark-toggle" onclick="toggleDarkMode()" title="Toggle Dark Mode">🌙</div>
+  </div>
+</header>
+
+<section class="hero">
+  <h1>Welcome to SafeSpace</h1>
+  <p>A calm and anonymous space to ask and answer questions online.</p>
+  <div class="button-group">
+    <a href="ask.html">Ask the Community</a>
+  </div>
+</section>
+
+<main>
+  <h3>Ask a Question</h3>
+  <textarea id="questionInput" rows="3" placeholder="What's on your mind?"></textarea>
+  <button onclick="addQuestion()">Submit</button>
+
+  <input type="text" id="searchBar" placeholder="Search questions..." oninput="renderQuestions()" />
+  <select id="sortSelect" onchange="renderQuestions()">
+    <option value="newest">Sort by Newest</option>
+    <option value="likes">Sort by Most Liked</option>
+  </select>
+
+  <div id="questions"></div>
+</main>
+
+<footer>
+  &copy; 2025 SafeSpace. Stay calm. Stay connected.
+</footer>
+
+<script>
+  const themes = [
+    { light: '#b2fab4', medium: '#00e676', dark: '#00c853' }, // Green
+      { light: '#ffc1e3', medium: '#f06292', dark: '#d81b60' }, // Pink
+      { light: '#eeeeee', medium: '#757575', dark: '#212121' }, // Gray
+      { light: '#fff59d', medium: '#ffeb3b', dark: '#fbc02d' }, // Yellow
+      { light: '#d4f1f9', medium: '#00b0ff', dark: '#2962ff' }, // Blue (DEFAULT)
+      { light: '#ffe0b2', medium: '#ff9800', dark: '#e65100' }, // Orange
+      { light: '#b2ebf2', medium: '#00bcd4', dark: '#0097a7' }, // Teal
+      { light: '#d1c4e9', medium: '#7e57c2', dark: '#4527a0' }, // Purple
+      { light: '#d7ccc8', medium: '#8d6e63', dark: '#4e342e' }, // Brown
+      { light: '#ffcdd2', medium: '#e57373', dark: '#c62828' }  // Red
+  ];
+
+ let currentTheme = parseInt(localStorage.getItem('themeIndex'));
+ if (isNaN(currentTheme)) currentTheme = 4; // Default to blue theme
+
+  let darkMode = localStorage.getItem('darkMode') === 'true';
+
+  function applyTheme(index) {
+    const theme = themes[index];
+    document.documentElement.style.setProperty('--light-blue', theme.light);
+    document.documentElement.style.setProperty('--medium-blue', theme.medium);
+    document.documentElement.style.setProperty('--dark-blue', theme.dark);
+    localStorage.setItem('themeIndex', index);
+  }
+
+  function changeTheme(direction) {
+    currentTheme = (currentTheme + direction + themes.length) % themes.length;
+    applyTheme(currentTheme);
+  }
+
+  function toggleDarkMode() {
+    darkMode = !darkMode;
+    document.body.classList.toggle('dark', darkMode);
+    localStorage.setItem('darkMode', darkMode);
+    document.querySelector('.dark-toggle').textContent = darkMode ? '☀️' : '🌙';
+  }
+
+  function loadPreferences() {
+    applyTheme(currentTheme);
+    document.body.classList.toggle('dark', darkMode);
+    document.querySelector('.dark-toggle').textContent = darkMode ? '☀️' : '🌙';
+  }
+
+  loadPreferences();
+
+  // Utility: generate random avatar seed for Dicebear
+  function avatarSeed() {
+    return Math.random().toString(36).substring(2, 10);
+  }
+
+  // Fake data for questions and replies
+  let questions = [
+    {
+      id: 1,
+      text: "How do I deal with social anxiety in school?",
+      author: "Anonymous",
+      time: "July 18, 2025",
+      likes: 3100,
+      replies: [
+        {
+          id: 11,
+          text: "Start small. Try speaking in smaller groups first. ❤️",
+          author: "Anonymous",
+          time: "Jan 5, 2025",
+          likes: 2500,
+          avatar: avatarSeed(),
+          children: [
+            {
+              id: 111,
+              text: "Thanks, that really helps!",
+              author: "Anonymous",
+              time: "Feb 1, 2025",
+              likes: 2200,
+              avatar: avatarSeed(),
+              children: []
+            }
+          ]
+        },
+        {
+          id: 12,
+          text: "Practice mindfulness and breathing exercises.",
+          author: "Anonymous",
+          time: "Feb 15, 2025",
+          likes: 2800,
+          avatar: avatarSeed(),
+          children: []
+        }
+      ]
+    },
+    {
+      id: 2,
+      text: "What are good habits to improve focus?",
+      author: "Anonymous",
+      time: "June 10, 2025",
+      likes: 4500,
+      replies: [
+        {
+          id: 21,
+          text: "Eliminate distractions around you.",
+          author: "Anonymous",
+          time: "June 11, 2025",
+          likes: 4000,
+          avatar: avatarSeed(),
+          children: []
+        },
+        {
+          id: 22,
+          text: "Try the Pomodoro technique!",
+          author: "Anonymous",
+          time: "June 12, 2025",
+          likes: 3800,
+          avatar: avatarSeed(),
+          children: []
+        },
+        {
+          id: 23,
+          text: "Stay hydrated and take regular breaks.",
+          author: "Anonymous",
+          time: "June 13, 2025",
+          likes: 3500,
+          avatar: avatarSeed(),
+          children: []
+        }
+      ]
+    },
+    {
+      id: 3,
+      text: "Is journaling good for mental health?",
+      author: "Anonymous",
+      time: "May 5, 2025",
+      likes: 3200,
+      replies: []
+    },
+    {
+      id: 4,
+      text: "How to forgive yourself after mistakes?",
+      author: "Anonymous",
+      time: "April 20, 2025",
+      likes: 2700,
+      replies: [
+        {
+          id: 41,
+          text: "Acknowledge your feelings without judgment.",
+          author: "Anonymous",
+          time: "April 21, 2025",
+          likes: 2400,
+          avatar: avatarSeed(),
+          children: []
+        },
+        {
+          id: 42,
+          text: "Remember that everyone makes mistakes.",
+          author: "Anonymous",
+          time: "April 22, 2025",
+          likes: 2300,
+          avatar: avatarSeed(),
+          children: []
+        },
+        {
+          id: 43,
+          text: "Practice self-compassion daily.",
+          author: "Anonymous",
+          time: "April 23, 2025",
+          likes: 2600,
+          avatar: avatarSeed(),
+          children: []
+        }
+      ]
+    },
+    {
+      id: 5,
+      text: "How do I stop procrastinating effectively?",
+      author: "Anonymous",
+      time: "March 15, 2025",
+      likes: 4700,
+      replies: [
+        {
+          id: 51,
+          text: "Break tasks into smaller chunks.",
+          author: "Anonymous",
+          time: "March 16, 2025",
+          likes: 4200,
+          avatar: avatarSeed(),
+          children: []
+        },
+        {
+          id: 52,
+          text: "Set clear deadlines.",
+          author: "Anonymous",
+          time: "March 17, 2025",
+          likes: 3900,
+          avatar: avatarSeed(),
+          children: []
+        }
+      ]
+    }
+  ];
+
+  // Render nested replies recursively
+  function renderReplies(replies) {
+    if (!replies || replies.length === 0) return '';
+
+    return `<div class="nested-replies">` + replies.map(reply => `
+      <div class="reply">
+        <img src="https://api.dicebear.com/7.x/thumbs/svg?seed=${reply.avatar}" alt="avatar" />
+        <div class="reply-content">
+          <div>${reply.text}</div>
+          <div class="reply-meta">Anonymous • ${reply.time} • 👍 ${reply.likes}</div>
+          <div class="reply-box">
+            <input type="text" placeholder="Reply..." data-replyid="${reply.id}" onkeypress="if(event.key==='Enter'){ addReplyToReply(event, ${reply.id}); }" />
+            <button onclick="addReplyToReplyBtn(${reply.id})">Reply</button>
+          </div>
+          ${renderReplies(reply.children)}
+        </div>
+      </div>
+    `).join('') + `</div>`;
+  }
+
+  // Render all questions
+  function renderQuestions() {
+    const container = document.getElementById('questions');
+    const searchTerm = document.getElementById('searchBar').value.toLowerCase();
+    const sortBy = document.getElementById('sortSelect').value;
+
+    let filtered = questions.filter(q => q.text.toLowerCase().includes(searchTerm));
+
+    if(sortBy === 'newest') {
+      filtered.sort((a,b) => b.id - a.id);
+    } else {
+      filtered.sort((a,b) => b.likes - a.likes);
+    }
+
+    container.innerHTML = filtered.map(q => `
+      <div class="question" data-id="${q.id}">
+        <div><strong>Q:</strong> ${q.text}</div>
+        <div class="meta">Anonymous • ${q.time} • 👍 ${q.likes}</div>
+
+        <div class="reply-box" style="margin-top:10px;">
+          <input type="text" placeholder="Reply..." data-questionid="${q.id}" onkeypress="if(event.key==='Enter'){ addReply(event, ${q.id}); }" />
+          <button onclick="addReplyBtn(${q.id})">Reply</button>
+        </div>
+
+        ${renderReplies(q.replies)}
+      </div>
+    `).join('');
+  }
+
+  // Add new question
+  function addQuestion() {
+    const input = document.getElementById('questionInput');
+    const text = input.value.trim();
+    if(text === '') return alert("Please enter a question.");
+    const newQuestion = {
+      id: questions.length ? questions[0].id + 1 : 1,
+      text,
+      author: "Anonymous",
+      time: new Date().toLocaleDateString(undefined, { year:'numeric', month:'long', day:'numeric' }),
+      likes: 0,
+      replies: []
+    };
+    questions.unshift(newQuestion);
+    input.value = '';
+    renderQuestions();
+  }
+
+  // Add reply to question
+  function addReply(event, questionId) {
+    const text = event.target.value.trim();
+    if(text === '') return;
+    event.target.value = '';
+    const question = questions.find(q => q.id === questionId);
+    if(!question) return;
+    question.replies.push({
+      id: Date.now(),
+      text,
+      author: "Anonymous",
+      time: new Date().toLocaleDateString(undefined, { year:'numeric', month:'long', day:'numeric' }),
+      likes: 0,
+      avatar: avatarSeed(),
+      children: []
+    });
+    renderQuestions();
+  }
+  function addReplyBtn(questionId) {
+    const input = document.querySelector(`input[data-questionid='${questionId}']`);
+    if(!input) return;
+    const text = input.value.trim();
+    if(text === '') return alert("Please enter a reply.");
+    input.value = '';
+    const question = questions.find(q => q.id === questionId);
+    if(!question) return;
+    question.replies.push({
+      id: Date.now(),
+      text,
+      author: "Anonymous",
+      time: new Date().toLocaleDateString(undefined, { year:'numeric', month:'long', day:'numeric' }),
+      likes: 0,
+      avatar: avatarSeed(),
+      children: []
+    });
+    renderQuestions();
+  }
+
+  // Add reply to reply (nested)
+  function addReplyToReply(event, replyId) {
+    const text = event.target.value.trim();
+    if(text === '') return;
+    event.target.value = '';
+    // Find reply in tree and add child
+    function findAndAdd(replyList) {
+      for(let r of replyList) {
+        if(r.id === replyId) {
+          r.children.push({
+            id: Date.now(),
+            text,
+            author: "Anonymous",
+            time: new Date().toLocaleDateString(undefined, { year:'numeric', month:'long', day:'numeric' }),
+            likes: 0,
+            avatar: avatarSeed(),
+            children: []
+          });
+          return true;
+        }
+        if(findAndAdd(r.children)) return true;
+      }
+      return false;
+    }
+    for(let q of questions) {
+      if(findAndAdd(q.replies)) break;
+    }
+    renderQuestions();
+  }
+  function addReplyToReplyBtn(replyId) {
+    const input = document.querySelector(`input[data-replyid='${replyId}']`);
+    if(!input) return;
+    const text = input.value.trim();
+    if(text === '') return alert("Please enter a reply.");
+    input.value = '';
+    function findAndAdd(replyList) {
+      for(let r of replyList) {
+        if(r.id === replyId) {
+          r.children.push({
+            id: Date.now(),
+            text,
+            author: "Anonymous",
+            time: new Date().toLocaleDateString(undefined, { year:'numeric', month:'long', day:'numeric' }),
+            likes: 0,
+            avatar: avatarSeed(),
+            children: []
+          });
+          return true;
+        }
+        if(findAndAdd(r.children)) return true;
+      }
+      return false;
+    }
+    for(let q of questions) {
+      if(findAndAdd(q.replies)) break;
+    }
+    renderQuestions();
+  }
+
+  // Initial render
+  renderQuestions();
+</script>
+
+</body>
+</html>

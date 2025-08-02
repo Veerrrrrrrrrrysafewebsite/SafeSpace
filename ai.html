@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Chatbot</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --light-blue: #d4f1f9;
+      --medium-blue: #90cdf4;
+      --dark-blue: #3182ce;
+      --white: #ffffff;
+      --text-color: #333;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: var(--light-blue);
+      color: var(--text-color);
+      transition: background-color 0.5s ease, color 0.5s ease;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      align-items: center;
+    }
+
+    body.dark {
+      --text-color: #f0f0f0;
+      background-color: #121212;
+    }
+
+    header {
+      width: 100%;
+      background-color: var(--medium-blue);
+      color: var(--white);
+      padding: 1.2rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      transition: background-color 0.5s ease, color 0.5s ease;
+      flex-shrink: 0;
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .theme-arrows,
+    .dark-toggle {
+      font-size: 1.5rem;
+      cursor: pointer;
+      user-select: none;
+      padding: 0.2rem 0.5rem;
+      border-radius: 5px;
+      transition: background-color 0.3s ease;
+    }
+
+    .theme-arrows:hover,
+    .dark-toggle:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    nav a {
+      color: var(--white);
+      margin: 0 1rem;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.5s ease;
+    }
+
+    nav a:hover {
+      text-decoration: underline;
+    }
+
+    /* --- Chatbot styles --- */
+    .chatbox {
+      width: 400px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 500px;
+      margin-top: 3rem;
+      flex-shrink: 0;
+    }
+
+    .chat-content {
+      max-height: 350px;
+      overflow-y: auto;
+      padding-right: 10px;
+      margin-bottom: 15px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-content .user {
+      background-color: var(--medium-blue);
+      align-self: flex-end;
+      padding: 8px;
+      border-radius: 10px;
+      margin: 5px;
+      max-width: 70%;
+      color: var(--white);
+    }
+
+    .chat-content .ai {
+      background-color: var(--dark-blue);
+      align-self: flex-start;
+      padding: 8px;
+      border-radius: 10px;
+      margin: 5px;
+      max-width: 70%;
+      color: var(--white);
+    }
+
+    .user-input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid var(--dark-blue);
+      margin-right: 10px;
+      font-size: 14px;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .send-btn {
+      padding: 10px;
+      background-color: var(--dark-blue);
+      color: var(--white);
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-top: 10px;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .send-btn:hover {
+      background-color: #2563bb;
+    }
+
+    .send-btn:focus {
+      outline: none;
+    }
+
+    .input-area {
+      display: flex;
+      align-items: center;
+    }
+
+    nav.chat-nav {
+      margin-top: 1rem;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      width: 100%;
+    }
+
+    nav.chat-nav a {
+      color: var(--dark-blue);
+      font-weight: 600;
+      text-decoration: none;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    nav.chat-nav a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h2>SafeSpace</h2>
+    <div class="header-controls">
+      <div class="theme-arrows" onclick="changeTheme(-1)">&#8592;</div>
+      <nav>
+        <a href="#">Home</a>
+        <a href="conatct.html">Contact Us</a>
+        <a href="ai.html">Ask AI</a>
+      </nav>
+      <div class="theme-arrows" onclick="changeTheme(1)">&#8594;</div>
+      <div class="dark-toggle" onclick="toggleDarkMode()" title="Toggle Dark Mode">🌙</div>
+    </div>
+  </header>
+
+  <div class="chatbox">
+    <div id="chat-content" class="chat-content"></div>
+    <div class="input-area">
+      <input type="text" id="user-input" class="user-input" placeholder="Type a message..." />
+      <button id="send-btn" class="send-btn">Send</button>
+    </div>
+  </div>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12"></script>
+  <script>
+    const themes = [
+      { light: '#b2fab4', medium: '#00e676', dark: '#00c853' }, // Green
+      { light: '#ffc1e3', medium: '#f06292', dark: '#d81b60' }, // Pink
+      { light: '#eeeeee', medium: '#757575', dark: '#212121' }, // Gray
+      { light: '#fff59d', medium: '#ffeb3b', dark: '#fbc02d' }, // Yellow
+      { light: '#d4f1f9', medium: '#00b0ff', dark: '#2962ff' }, // Blue (DEFAULT)
+      { light: '#ffe0b2', medium: '#ff9800', dark: '#e65100' }, // Orange
+      { light: '#b2ebf2', medium: '#00bcd4', dark: '#0097a7' }, // Teal
+      { light: '#d1c4e9', medium: '#7e57c2', dark: '#4527a0' }, // Purple
+      { light: '#d7ccc8', medium: '#8d6e63', dark: '#4e342e' }, // Brown
+      { light: '#ffcdd2', medium: '#e57373', dark: '#c62828' }  // Red
+    ];
+
+    let currentTheme = parseInt(localStorage.getItem('themeIndex'));
+    if (isNaN(currentTheme)) currentTheme = 4; // Default blue
+
+    let darkMode = localStorage.getItem('darkMode') === 'true';
+
+    function applyTheme(index) {
+      const theme = themes[index];
+      document.documentElement.style.setProperty('--light-blue', theme.light);
+      document.documentElement.style.setProperty('--medium-blue', theme.medium);
+      document.documentElement.style.setProperty('--dark-blue', theme.dark);
+      localStorage.setItem('themeIndex', index);
+    }
+
+    function changeTheme(direction) {
+      currentTheme = (currentTheme + direction + themes.length) % themes.length;
+      applyTheme(currentTheme);
+    }
+
+    function toggleDarkMode() {
+      darkMode = !darkMode;
+      document.body.classList.toggle('dark', darkMode);
+      localStorage.setItem('darkMode', darkMode);
+      document.querySelector('.dark-toggle').textContent = darkMode ? '☀️' : '🌙';
+    }
+
+    function loadPreferences() {
+      applyTheme(currentTheme);
+      document.body.classList.toggle('dark', darkMode);
+      document.querySelector('.dark-toggle').textContent = darkMode ? '☀️' : '🌙';
+    }
+
+    loadPreferences();
+
+    // --- Chatbot script ---
+    function createMessage(message, sender) {
+      const messageDiv = document.createElement('div');
+      messageDiv.classList.add(sender);
+      messageDiv.textContent = message;
+      document.getElementById('chat-content').appendChild(messageDiv);
+      document.getElementById('chat-content').scrollTop = document.getElementById('chat-content').scrollHeight;
+    }
+
+    function aiResponse(userMessage) {
+      const lowerCaseMessage = userMessage.toLowerCase();
+
+      if (lowerCaseMessage.includes("sad")) {
+        return "I'm really sorry you're feeling sad. It's okay to feel that way. Would you like to talk about it?";
+      } else if (lowerCaseMessage.includes("happy")) {
+        return "That's awesome! I'm glad you're feeling happy. What's making you feel that way?";
+      } else if (lowerCaseMessage.includes("angry")) {
+        return "I'm sorry you're feeling angry. It's completely normal. Want to share what's bothering you?";
+      } else if (lowerCaseMessage.includes("anxious")) {
+        return "I understand how anxiety can feel overwhelming. It's okay, take a deep breath, and I'm here if you need to talk.";
+      } else if (lowerCaseMessage.includes("hi") || lowerCaseMessage.includes("hello")) {
+        return "Hello! How can I help you today?";
+      } else if (lowerCaseMessage.includes("how are you")) {
+        return "I'm just a chatbot, but thank you for asking! How about you?";
+      } else if (lowerCaseMessage.includes("bye")) {
+        return "Goodbye! Take care and feel free to chat with me anytime!";
+      } else if (lowerCaseMessage.includes("what is your name") || lowerCaseMessage.includes("who are you")) {
+        return "I'm a friendly chatbot here to help you. You can call me Chatbot!";
+      } else if (lowerCaseMessage.includes("how old are you")) {
+        return "I'm ageless, just a program made to help you out!";
+      } else {
+        return "I understand. Tell me more.";
+      }
+    }
+
+    function sendMessage() {
+      const userInput = document.getElementById('user-input').value.trim();
+
+      if (userInput) {
+        createMessage(userInput, 'user');
+        document.getElementById('user-input').value = '';
+        const aiMessage = aiResponse(userInput);
+        setTimeout(() => createMessage(aiMessage, 'ai'), 500);
+      }
+    }
+
+    document.getElementById('send-btn').addEventListener('click', sendMessage);
+    document.getElementById('user-input').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
+  </script>
+</body>
+</html>

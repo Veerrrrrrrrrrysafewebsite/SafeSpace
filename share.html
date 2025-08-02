@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Share Your Thoughts | SafeSpace</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --light-blue: #d4f1f9;
+      --medium-blue: #90cdf4;
+      --dark-blue: #3182ce;
+      --white: #ffffff;
+      --text-color: #333;
+      --card-bg: var(--white);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: var(--light-blue);
+      color: var(--text-color);
+      transition: background-color 0.5s ease, color 0.5s ease;
+    }
+
+    body.dark {
+      --text-color: #f0f0f0;
+      --card-bg: #1f1f1f;
+      background-color: #121212;
+    }
+
+    header {
+      background-color: var(--medium-blue);
+      color: var(--white);
+      padding: 1.2rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    nav a {
+      color: var(--white);
+      margin: 0 1rem;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    nav a:hover { text-decoration: underline; }
+
+    .theme-arrows,
+    .dark-toggle {
+      font-size: 1.5rem;
+      cursor: pointer;
+      user-select: none;
+      padding: 0.2rem 0.5rem;
+      border-radius: 5px;
+      transition: background-color 0.3s ease;
+    }
+
+    .theme-arrows:hover,
+    .dark-toggle:hover {
+      background-color: rgba(255,255,255,0.2);
+    }
+
+    .hero {
+      background-color: var(--light-blue);
+      color: var(--dark-blue);
+      text-align: center;
+      padding: 4rem 2rem 2rem;
+    }
+
+    body.dark .hero {
+      background-color: #1a1a1a;
+      color: #90cdf4;
+    }
+
+    .hero h1 { font-size: 2.5rem; margin-bottom: 1rem; }
+    .hero p { font-size: 1.2rem; max-width: 600px; margin: 0 auto; }
+
+    main {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .card blockquote {
+      font-style: italic;
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+    }
+
+    .card .delete-btn {
+      background: transparent;
+      border: none;
+      color: #f44336;
+      font-weight: bold;
+      cursor: pointer;
+      float: right;
+    }
+
+    .reply-input {
+      margin-top: 1rem;
+    }
+
+    .reply-input textarea {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      resize: vertical;
+    }
+
+    .reply-input button {
+      margin-top: 0.5rem;
+      background-color: var(--dark-blue);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 0.4rem 1rem;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .replies {
+      margin-top: 1rem;
+      border-left: 2px solid var(--medium-blue);
+      padding-left: 1rem;
+    }
+
+    .add-post textarea {
+      width: 100%;
+      padding: 0.8rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1rem;
+      resize: vertical;
+      min-height: 80px;
+      margin-bottom: 1rem;
+    }
+
+    .add-post button {
+      background-color: var(--dark-blue);
+      color: #fff;
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    footer {
+      background-color: var(--medium-blue);
+      color: var(--white);
+      text-align: center;
+      padding: 1rem;
+      font-size: 0.95rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h2>SafeSpace</h2>
+    <div class="header-controls">
+      <div class="theme-arrows" onclick="changeTheme(-1)">&#8592;</div>
+      <nav>
+        <a href="#">Home</a>
+        <a href="conatct.html">Contact Us</a>
+		<a href="ai.html">Ask AI</a>
+      </nav>
+      <div class="theme-arrows" onclick="changeTheme(1)">&#8594;</div>
+      <div class="dark-toggle" onclick="toggleDarkMode()" title="Toggle Dark Mode">🌙</div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <h1>Share Your Thoughts and Feelings</h1>
+    <p>Your message is anonymous. Let it out, and reply to others with kindness.</p>
+  </section>
+
+  <main>
+    <div class="add-post">
+      <textarea id="thoughtInput" placeholder="Type your thoughts here..."></textarea>
+      <button onclick="submitThought()">Submit</button>
+    </div>
+
+    <div id="thoughtsContainer"></div>
+  </main>
+
+  <footer>
+    &copy; 2025 SafeSpace. You're not alone.
+  </footer>
+
+  <script>
+    const themes = [
+      { light: '#b2fab4', medium: '#00e676', dark: '#00c853' },
+      { light: '#ffc1e3', medium: '#f06292', dark: '#d81b60' },
+      { light: '#eeeeee', medium: '#757575', dark: '#212121' },
+      { light: '#fff59d', medium: '#ffeb3b', dark: '#fbc02d' },
+      { light: '#d4f1f9', medium: '#00b0ff', dark: '#2962ff' },
+      { light: '#ffe0b2', medium: '#ff9800', dark: '#e65100' },
+      { light: '#b2ebf2', medium: '#00bcd4', dark: '#0097a7' },
+      { light: '#d1c4e9', medium: '#7e57c2', dark: '#4527a0' },
+      { light: '#d7ccc8', medium: '#8d6e63', dark: '#4e342e' },
+      { light: '#ffcdd2', medium: '#e57373', dark: '#c62828' }
+    ];
+
+    let currentTheme = parseInt(localStorage.getItem('themeIndex'));
+    if (isNaN(currentTheme)) currentTheme = 4;
+    let darkMode = localStorage.getItem('darkMode') === 'true';
+
+    // Simulate a user (in a real app, you would get this from a backend or user session)
+    const currentUser = localStorage.getItem('currentUser') || 'anonymousUser';
+
+    function applyTheme(index) {
+      const theme = themes[index];
+      document.documentElement.style.setProperty('--light-blue', theme.light);
+      document.documentElement.style.setProperty('--medium-blue', theme.medium);
+      document.documentElement.style.setProperty('--dark-blue', theme.dark);
+      localStorage.setItem('themeIndex', index);
+    }
+
+    function changeTheme(direction) {
+      currentTheme = (currentTheme + direction + themes.length) % themes.length;
+      applyTheme(currentTheme);
+    }
+
+    function toggleDarkMode() {
+      darkMode = !darkMode;
+      document.body.classList.toggle('dark', darkMode);
+      localStorage.setItem('darkMode', darkMode);
+      document.querySelector('.dark-toggle').textContent = darkMode ? '☀️' : '🌙';
+    }
+
+    function loadPreferences() {
+      applyTheme(currentTheme);
+      document.body.classList.toggle('dark', darkMode);
+      document.querySelector('.dark-toggle').textContent = darkMode ? '☀️' : '🌙';
+    }
+
+    const defaultThoughts = [
+      "I feel overwhelmed but hopeful. – Anonymous",
+      "Sometimes silence is healing. – Anonymous",
+      "I'm scared of being judged. – Anonymous",
+      "I just needed to say something, even if no one hears it. – Anonymous",
+      "I'm trying my best. – Anonymous"
+    ];
+
+    function loadThoughts() {
+      const container = document.getElementById('thoughtsContainer');
+      container.innerHTML = '';
+      let thoughts = JSON.parse(localStorage.getItem('thoughts') || '[]');
+      if (!thoughts.length) thoughts = defaultThoughts.map((t, i) => ({ text: t, replies: [], id: i, user: 'anonymousUser' }));
+      localStorage.setItem('thoughts', JSON.stringify(thoughts));
+
+      thoughts.forEach((thought, idx) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <blockquote>"${thought.text}"</blockquote>
+          ${thought.user === currentUser ? `<button class="delete-btn" onclick="deleteThought(${idx})">Delete</button>` : ''}
+          <div class="reply-input">
+            <textarea id="reply-${idx}" placeholder="Reply..."></textarea>
+            <button onclick="submitReply(${idx})">Reply</button>
+          </div>
+          <div class="replies">
+            ${(thought.replies || []).map(r => `<p>- ${r}</p>`).join('')}
+          </div>
+        `;
+        container.prepend(card);
+      });
+    }
+
+    function submitThought() {
+      const input = document.getElementById('thoughtInput');
+      let value = input.value.trim();
+      if (!value) return alert('Please enter something.');
+      if (!value.toLowerCase().includes('– anonymous')) value += ' – Anonymous';
+
+      const thoughts = JSON.parse(localStorage.getItem('thoughts') || '[]');
+      thoughts.push({ text: value, replies: [], user: currentUser });
+      localStorage.setItem('thoughts', JSON.stringify(thoughts));
+      input.value = '';
+      loadThoughts();
+    }
+
+    function deleteThought(index) {
+      const thoughts = JSON.parse(localStorage.getItem('thoughts') || '[]');
+      thoughts.splice(index, 1);
+      localStorage.setItem('thoughts', JSON.stringify(thoughts));
+      loadThoughts();
+    }
+
+    function submitReply(index) {
+      const replyInput = document.getElementById(`reply-${index}`);
+      let reply = replyInput.value.trim();
+      if (!reply) return;
+      reply += ' – Anonymous';
+
+      const thoughts = JSON.parse(localStorage.getItem('thoughts') || '[]');
+      thoughts[index].replies = thoughts[index].replies || [];
+      thoughts[index].replies.push(reply);
+      localStorage.setItem('thoughts', JSON.stringify(thoughts));
+      replyInput.value = '';
+      loadThoughts();
+    }
+
+    // Init
+    loadPreferences();
+    loadThoughts();
+  </script>
+</body>
+</html>
